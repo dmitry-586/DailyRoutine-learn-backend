@@ -16,20 +16,3 @@ export class SubchapterResponseDto {
   @ApiProperty()
   order!: number;
 }
-
-export class ChapterResponseDto {
-  @ApiProperty()
-  id!: string;
-
-  @ApiProperty()
-  partId!: string;
-
-  @ApiProperty()
-  title!: string;
-
-  @ApiProperty()
-  order!: number;
-
-  @ApiProperty({ type: [SubchapterResponseDto] })
-  subchapters!: SubchapterResponseDto[];
-}

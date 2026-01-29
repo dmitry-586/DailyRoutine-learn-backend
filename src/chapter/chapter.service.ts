@@ -1,9 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { ChapterGetPayload } from '../../generated/prisma/models/Chapter.js';
 import { prisma } from '../lib/prisma.js';
-import {
-  ChapterNavigationDto,
+import type { CreateChapterDto } from './chapter-request.dto.js';
+import type {
   ChapterResponseDto,
+  SubchapterResponseDto,
 } from './chapter-response.dto.js';
+
+type ChapterWithSubchapters = ChapterGetPayload<{
+  include: { subchapters: true };
+}>;
+
+const includeSubchapters = {
+  include: {
+    subchapters: { orderBy: { order: 'asc' as const } },
+  },
+} as const;
+
+function toChapterResponseDto(
+  chapter: ChapterWithSubchapters,
+): ChapterResponseDto {
+  return {
+    id: chapter.id,
+    partId: chapter.partId,
+    title: chapter.title,
+    order: chapter.order,
+    subchapters: chapter.subchapters.map(
+      (s): SubchapterResponseDto => ({
+        id: s.id,
+        chapterId: s.chapterId,
+        title: s.title,
+        description: s.description,
+        order: s.order,
+      }),
+    ),
+  };
+}
 
 @Injectable()
 export class ChapterService {
@@ -11,58 +43,43 @@ export class ChapterService {
     const chapters = await prisma.chapter.findMany({
       where: partId ? { partId } : undefined,
       orderBy: { order: 'asc' },
+      ...includeSubchapters,
     });
-
-    return chapters;
+    return chapters.map(toChapterResponseDto);
   }
 
   async findOne(id: string): Promise<ChapterResponseDto> {
     const chapter = await prisma.chapter.findUnique({
       where: { id },
+      ...includeSubchapters,
     });
-
     if (!chapter) {
       throw new NotFoundException(`Глава с id ${id} не найдена`);
     }
-
-    return chapter;
+    return toChapterResponseDto(chapter);
   }
 
-  async findNext(id: string): Promise<ChapterNavigationDto | null> {
-    const currentChapter = await this.findOne(id);
-
-    const nextChapter = await prisma.chapter.findFirst({
-      where: {
-        partId: currentChapter.partId,
-        order: { gt: currentChapter.order },
-      },
-      orderBy: { order: 'asc' },
-      select: {
-        id: true,
-        title: true,
-        order: true,
+  async create(dto: CreateChapterDto): Promise<ChapterResponseDto> {
+    const part = await prisma.part.findUnique({
+      where: { id: dto.partId },
+    });
+    if (!part) {
+      throw new NotFoundException(`Часть с id ${dto.partId} не найдена`);
+    }
+    const chapter = await prisma.chapter.create({
+      data: {
+        partId: dto.partId,
+        title: dto.title,
+        order: dto.order,
       },
     });
 
-    return nextChapter;
-  }
-
-  async findPrevious(id: string): Promise<ChapterNavigationDto | null> {
-    const currentChapter = await this.findOne(id);
-
-    const previousChapter = await prisma.chapter.findFirst({
-      where: {
-        partId: currentChapter.partId,
-        order: { lt: currentChapter.order },
-      },
-      orderBy: { order: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        order: true,
-      },
-    });
-
-    return previousChapter;
+    return {
+      id: chapter.id,
+      partId: chapter.partId,
+      title: chapter.title,
+      order: chapter.order,
+      subchapters: [],
+    };
   }
 }
