@@ -5,6 +5,8 @@ async function main() {
 
   // Очистка существующих данных
   console.log('Очистка существующих данных...');
+  await prisma.card.deleteMany();
+  await prisma.cardCategory.deleteMany();
   await prisma.subchapter.deleteMany();
   await prisma.chapter.deleteMany();
   await prisma.part.deleteMany();
@@ -370,10 +372,96 @@ console.log(counter()); // 2
     },
   });
 
+  // Создание категорий и карточек для запоминания
+  console.log('Создание категорий и карточек...');
+
+  const catJs = await prisma.cardCategory.create({
+    data: { title: 'JavaScript основы', order: 1 },
+  });
+
+  const catTypes = await prisma.cardCategory.create({
+    data: { title: 'Типы и переменные', order: 2 },
+  });
+
+  const catFunctions = await prisma.cardCategory.create({
+    data: { title: 'Функции и массивы', order: 3 },
+  });
+
+  await prisma.card.createMany({
+    data: [
+      {
+        categoryId: catJs.id,
+        question: 'Что такое JavaScript?',
+        answer:
+          'Язык программирования для веб-разработки. Выполняется в браузере и на сервере (Node.js).',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catJs.id,
+        question: 'Чем let отличается от const?',
+        answer:
+          'let можно переназначить, const — нет. Оба имеют блочную область видимости.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catJs.id,
+        question: 'Что такое hoisting?',
+        answer:
+          'Поднятие объявлений переменных и функций в начало области видимости до выполнения кода.',
+        difficulty: 'HARD',
+      },
+      {
+        categoryId: catTypes.id,
+        question: 'Какие примитивные типы есть в JavaScript?',
+        answer: 'number, string, boolean, undefined, null, symbol, bigint.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catTypes.id,
+        question: 'Что вернёт typeof null?',
+        answer: '"object" — известная особенность (баг) JavaScript.',
+        difficulty: 'HARD',
+      },
+      {
+        categoryId: catTypes.id,
+        question: 'Что такое строгая проверка равенства?',
+        answer:
+          'Оператор === сравнивает без приведения типов (значение и тип должны совпадать).',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catFunctions.id,
+        question: 'Что такое стрелочная функция?',
+        answer:
+          'Синтаксис ()=>{} из ES6. Не имеет своего this, наследует от внешнего контекста.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catFunctions.id,
+        question: 'Что делает метод Array.map()?',
+        answer:
+          'Создаёт новый массив, применяя функцию к каждому элементу исходного массива.',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catFunctions.id,
+        question: 'Чем map отличается от forEach?',
+        answer:
+          'map возвращает новый массив с результатами; forEach только перебирает, возвращает undefined.',
+        difficulty: 'MEDIUM',
+      },
+    ],
+  });
+
+  const cardsCount = await prisma.card.count();
+  const categoriesCount = await prisma.cardCategory.count();
+
   console.log('✅ База данных успешно заполнена тестовыми данными!');
   console.log(`📚 Создано частей: 3`);
   console.log(`📖 Создано глав: 10`);
   console.log(`🔹 Создано подразделов: 10`);
+  console.log(`📁 Создано категорий карточек: ${categoriesCount}`);
+  console.log(`🃏 Создано карточек: ${cardsCount}`);
 }
 
 main()

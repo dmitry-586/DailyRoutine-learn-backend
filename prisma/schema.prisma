@@ -76,3 +76,30 @@ model Subchapter {
   @@index([chapterId])
   @@map("subchapters")
 }
+
+enum CardDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model CardCategory {
+  id    String @id @default(uuid())
+  title String
+  order Int    @default(0)
+  cards Card[]
+
+  @@map("card_categories")
+}
+
+model Card {
+  id         String         @id @default(uuid())
+  categoryId String
+  question   String
+  answer     String
+  difficulty CardDifficulty @default(MEDIUM)
+  category   CardCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@map("cards")
+}
