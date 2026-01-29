@@ -41,4 +41,4 @@ USER nestjs
 EXPOSE 4000
 
 # При первом запуске: docker compose run --rm app npx prisma migrate deploy
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
