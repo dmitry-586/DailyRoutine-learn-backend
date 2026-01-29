@@ -7,12 +7,12 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateCardCategoryDto } from './card-category-request.dto.js';
-import { CardCategoryResponseDto } from './card-category-response.dto.js';
-import { CardCategoryService } from './card-category.service.js';
+import { CreateCardCategoryDto } from './category-request.dto.js';
+import { CardCategoryResponseDto } from './category-response.dto.js';
+import { CardCategoryService } from './category.service.js';
 
-@ApiTags('card-category')
-@Controller('card-category')
+@ApiTags('category')
+@Controller('category')
 export class CardCategoryController {
   constructor(private readonly cardCategoryService: CardCategoryService) {}
 

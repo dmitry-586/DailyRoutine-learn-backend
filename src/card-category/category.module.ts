@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { CardCategoryController } from './card-category.controller.js';
-import { CardCategoryService } from './card-category.service.js';
+import { CardCategoryController } from './category.controller.js';
+import { CardCategoryService } from './category.service.js';
 
 @Module({
   controllers: [CardCategoryController],
