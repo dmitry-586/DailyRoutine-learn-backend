@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Card } from '../../generated/prisma/client.js';
 import { prisma } from '../lib/prisma.js';
-import type { CreateCardDto } from './card-request.dto.js';
+import type {
+  CardDifficulty,
+  CreateCardDto,
+  UpdateCardDto,
+} from './card-request.dto.js';
 import type { CardResponseDto } from './card-response.dto.js';
 
 function toCardResponseDto(c: Card): CardResponseDto {
@@ -50,6 +54,41 @@ export class CardService {
         answer: dto.answer,
         difficulty: dto.difficulty,
       },
+    });
+    return toCardResponseDto(card);
+  }
+
+  async update(id: string, dto: UpdateCardDto): Promise<CardResponseDto> {
+    const existing = await prisma.card.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Карточка с id ${id} не найдена`);
+    }
+    if (dto.categoryId !== undefined) {
+      const category = await prisma.cardCategory.findUnique({
+        where: { id: dto.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException(
+          `Категория карточек с id ${dto.categoryId} не найдена`,
+        );
+      }
+    }
+    const data: {
+      categoryId?: string;
+      question?: string;
+      answer?: string;
+      difficulty?: CardDifficulty;
+    } = {};
+    if (dto.categoryId !== undefined) data.categoryId = dto.categoryId;
+    if (dto.question !== undefined) data.question = dto.question;
+    if (dto.answer !== undefined) data.answer = dto.answer;
+    if (dto.difficulty !== undefined) data.difficulty = dto.difficulty;
+    if (Object.keys(data).length === 0) {
+      return toCardResponseDto(existing);
+    }
+    const card = await prisma.card.update({
+      where: { id },
+      data,
     });
     return toCardResponseDto(card);
   }

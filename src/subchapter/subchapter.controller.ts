@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -8,7 +16,10 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateSubchapterDto } from './subchapter-request.dto.js';
+import {
+  CreateSubchapterDto,
+  UpdateSubchapterDto,
+} from './subchapter-request.dto.js';
 import { SubchapterResponseDto } from './subchapter-response.dto.js';
 import { SubchapterService } from './subchapter.service.js';
 
@@ -30,7 +41,7 @@ export class SubchapterController {
   async findAll(
     @Query('chapterId') chapterId?: string,
   ): Promise<SubchapterResponseDto[]> {
-    return this.subchapterService.findAll(chapterId);
+    return await this.subchapterService.findAll(chapterId);
   }
 
   @Get(':id')
@@ -39,7 +50,7 @@ export class SubchapterController {
   @ApiOkResponse({ description: 'Подраздел', type: SubchapterResponseDto })
   @ApiNotFoundResponse({ description: 'Подраздел не найден' })
   async findOne(@Param('id') id: string): Promise<SubchapterResponseDto> {
-    return this.subchapterService.findOne(id);
+    return await this.subchapterService.findOne(id);
   }
 
   @Post()
@@ -51,6 +62,21 @@ export class SubchapterController {
   async create(
     @Body() dto: CreateSubchapterDto,
   ): Promise<SubchapterResponseDto> {
-    return this.subchapterService.create(dto);
+    return await this.subchapterService.create(dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Редактировать подраздел' })
+  @ApiParam({ name: 'id', description: 'ID подраздела' })
+  @ApiOkResponse({
+    description: 'Подраздел обновлён',
+    type: SubchapterResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Подраздел не найден' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateSubchapterDto,
+  ): Promise<SubchapterResponseDto> {
+    return await this.subchapterService.update(id, dto);
   }
 }

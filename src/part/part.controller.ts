@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -7,7 +7,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreatePartDto } from './part-request.dto.js';
+import { CreatePartDto, UpdatePartDto } from './part-request.dto.js';
 import { PartResponseDto } from './part-response.dto.js';
 import { PartService } from './part.service.js';
 
@@ -20,7 +20,7 @@ export class PartController {
   @ApiOperation({ summary: 'Список частей курса' })
   @ApiOkResponse({ description: 'Список частей', type: [PartResponseDto] })
   async findAll(): Promise<PartResponseDto[]> {
-    return this.partService.findAll();
+    return await this.partService.findAll();
   }
 
   @Get(':id')
@@ -29,13 +29,25 @@ export class PartController {
   @ApiOkResponse({ description: 'Часть', type: PartResponseDto })
   @ApiNotFoundResponse({ description: 'Часть не найдена' })
   async findOne(@Param('id') id: string): Promise<PartResponseDto> {
-    return this.partService.findOne(id);
+    return await this.partService.findOne(id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Создать часть' })
   @ApiCreatedResponse({ description: 'Часть создана', type: PartResponseDto })
   async create(@Body() dto: CreatePartDto): Promise<PartResponseDto> {
-    return this.partService.create(dto);
+    return await this.partService.create(dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Редактировать часть' })
+  @ApiParam({ name: 'id', description: 'ID части' })
+  @ApiOkResponse({ description: 'Часть обновлена', type: PartResponseDto })
+  @ApiNotFoundResponse({ description: 'Часть не найдена' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePartDto,
+  ): Promise<PartResponseDto> {
+    return await this.partService.update(id, dto);
   }
 }

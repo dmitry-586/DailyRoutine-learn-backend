@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Subchapter } from '../../generated/prisma/client.js';
 import { prisma } from '../lib/prisma.js';
-import type { CreateSubchapterDto } from './subchapter-request.dto.js';
+import type {
+  CreateSubchapterDto,
+  UpdateSubchapterDto,
+} from './subchapter-request.dto.js';
 import type { SubchapterResponseDto } from './subchapter-response.dto.js';
 
 function toSubchapterResponseDto(s: Subchapter): SubchapterResponseDto {
@@ -48,6 +51,42 @@ export class SubchapterService {
         description: dto.description,
         order: dto.order,
       },
+    });
+    return toSubchapterResponseDto(subchapter);
+  }
+
+  async update(
+    id: string,
+    dto: UpdateSubchapterDto,
+  ): Promise<SubchapterResponseDto> {
+    const existing = await prisma.subchapter.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Подраздел с id ${id} не найден`);
+    }
+    if (dto.chapterId !== undefined) {
+      const chapter = await prisma.chapter.findUnique({
+        where: { id: dto.chapterId },
+      });
+      if (!chapter) {
+        throw new NotFoundException(`Глава с id ${dto.chapterId} не найдена`);
+      }
+    }
+    const data: {
+      chapterId?: string;
+      title?: string;
+      description?: string;
+      order?: number;
+    } = {};
+    if (dto.chapterId !== undefined) data.chapterId = dto.chapterId;
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.order !== undefined) data.order = dto.order;
+    if (Object.keys(data).length === 0) {
+      return toSubchapterResponseDto(existing);
+    }
+    const subchapter = await prisma.subchapter.update({
+      where: { id },
+      data,
     });
     return toSubchapterResponseDto(subchapter);
   }

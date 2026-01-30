@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -7,7 +7,10 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateCardCategoryDto } from './category-request.dto.js';
+import {
+  CreateCardCategoryDto,
+  UpdateCardCategoryDto,
+} from './category-request.dto.js';
 import { CardCategoryResponseDto } from './category-response.dto.js';
 import { CardCategoryService } from './category.service.js';
 
@@ -23,7 +26,7 @@ export class CardCategoryController {
     type: [CardCategoryResponseDto],
   })
   async findAll(): Promise<CardCategoryResponseDto[]> {
-    return this.cardCategoryService.findAll();
+    return await this.cardCategoryService.findAll();
   }
 
   @Get(':id')
@@ -35,7 +38,7 @@ export class CardCategoryController {
   })
   @ApiNotFoundResponse({ description: 'Категория не найдена' })
   async findOne(@Param('id') id: string): Promise<CardCategoryResponseDto> {
-    return this.cardCategoryService.findOne(id);
+    return await this.cardCategoryService.findOne(id);
   }
 
   @Post()
@@ -47,6 +50,21 @@ export class CardCategoryController {
   async create(
     @Body() dto: CreateCardCategoryDto,
   ): Promise<CardCategoryResponseDto> {
-    return this.cardCategoryService.create(dto);
+    return await this.cardCategoryService.create(dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Редактировать категорию карточек' })
+  @ApiParam({ name: 'id', description: 'ID категории' })
+  @ApiOkResponse({
+    description: 'Категория обновлена',
+    type: CardCategoryResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Категория не найдена' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCardCategoryDto,
+  ): Promise<CardCategoryResponseDto> {
+    return await this.cardCategoryService.update(id, dto);
   }
 }

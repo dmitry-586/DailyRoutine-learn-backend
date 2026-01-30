@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -8,7 +16,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateChapterDto } from './chapter-request.dto.js';
+import { CreateChapterDto, UpdateChapterDto } from './chapter-request.dto.js';
 import { ChapterResponseDto } from './chapter-response.dto.js';
 import { ChapterService } from './chapter.service.js';
 
@@ -27,7 +35,7 @@ export class ChapterController {
   async findAll(
     @Query('partId') partId?: string,
   ): Promise<ChapterResponseDto[]> {
-    return this.chapterService.findAll(partId);
+    return await this.chapterService.findAll(partId);
   }
 
   @Get(':id')
@@ -36,7 +44,7 @@ export class ChapterController {
   @ApiOkResponse({ description: 'Глава', type: ChapterResponseDto })
   @ApiNotFoundResponse({ description: 'Глава не найдена' })
   async findOne(@Param('id') id: string): Promise<ChapterResponseDto> {
-    return this.chapterService.findOne(id);
+    return await this.chapterService.findOne(id);
   }
 
   @Post()
@@ -46,6 +54,18 @@ export class ChapterController {
     type: ChapterResponseDto,
   })
   async create(@Body() dto: CreateChapterDto): Promise<ChapterResponseDto> {
-    return this.chapterService.create(dto);
+    return await this.chapterService.create(dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Редактировать главу' })
+  @ApiParam({ name: 'id', description: 'ID главы' })
+  @ApiOkResponse({ description: 'Глава обновлена', type: ChapterResponseDto })
+  @ApiNotFoundResponse({ description: 'Глава не найдена' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateChapterDto,
+  ): Promise<ChapterResponseDto> {
+    return await this.chapterService.update(id, dto);
   }
 }

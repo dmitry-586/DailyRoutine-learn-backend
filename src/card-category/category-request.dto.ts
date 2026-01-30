@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateCardCategoryDto {
   @ApiProperty({ description: 'Название категории карточек' })
@@ -7,3 +7,5 @@ export class CreateCardCategoryDto {
   @ApiProperty({ description: 'Порядок отображения', default: 0 })
   order!: number;
 }
+
+export class UpdateCardCategoryDto extends PartialType(CreateCardCategoryDto) {}

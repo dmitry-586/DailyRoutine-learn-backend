@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PartGetPayload } from '../../generated/prisma/models/Part.js';
 import { prisma } from '../lib/prisma.js';
-import type { CreatePartDto } from './part-request.dto.js';
+import type { CreatePartDto, UpdatePartDto } from './part-request.dto.js';
 import type {
   PartChapterItemDto,
   PartResponseDto,
@@ -64,6 +64,28 @@ export class PartService {
         title: dto.title,
         order: dto.order,
       },
+      ...includeChaptersHeaders,
+    });
+    return toPartResponseDto(part);
+  }
+
+  async update(id: string, dto: UpdatePartDto): Promise<PartResponseDto> {
+    const existing = await prisma.part.findUnique({
+      where: { id },
+      ...includeChaptersHeaders,
+    });
+    if (!existing) {
+      throw new NotFoundException(`Часть с id ${id} не найдена`);
+    }
+    const data: { title?: string; order?: number } = {};
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.order !== undefined) data.order = dto.order;
+    if (Object.keys(data).length === 0) {
+      return toPartResponseDto(existing);
+    }
+    const part = await prisma.part.update({
+      where: { id },
+      data,
       ...includeChaptersHeaders,
     });
     return toPartResponseDto(part);

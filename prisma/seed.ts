@@ -387,6 +387,22 @@ console.log(counter()); // 2
     data: { title: 'Функции и массивы', order: 3 },
   });
 
+  const catAsync = await prisma.cardCategory.create({
+    data: { title: 'Асинхронность и промисы', order: 4 },
+  });
+
+  const catOop = await prisma.cardCategory.create({
+    data: { title: 'ООП и классы', order: 5 },
+  });
+
+  const catScope = await prisma.cardCategory.create({
+    data: { title: 'Замыкания и область видимости', order: 6 },
+  });
+
+  const catGeneral = await prisma.cardCategory.create({
+    data: { title: 'Общие термины', order: 7 },
+  });
+
   await prisma.card.createMany({
     data: [
       {
@@ -448,6 +464,89 @@ console.log(counter()); // 2
         question: 'Чем map отличается от forEach?',
         answer:
           'map возвращает новый массив с результатами; forEach только перебирает, возвращает undefined.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catAsync.id,
+        question: 'Что такое Promise?',
+        answer:
+          'Объект, представляющий результат асинхронной операции: pending, fulfilled или rejected.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catAsync.id,
+        question: 'Для чего нужен async/await?',
+        answer:
+          'Синтаксический сахар над промисами: код выглядит синхронным, но выполняется асинхронно.',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catAsync.id,
+        question: 'Что делает Promise.all()?',
+        answer:
+          'Принимает массив промисов и возвращает один промис, который резолвится, когда все выполнены.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catOop.id,
+        question: 'Что такое класс в JavaScript?',
+        answer:
+          'Шаблон для создания объектов с общими свойствами и методами (синтаксический сахар над прототипами).',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catOop.id,
+        question: 'Для чего нужен super() в конструкторе?',
+        answer:
+          'Вызов конструктора родительского класса; обязателен в конструкторе дочернего класса до использования this.',
+        difficulty: 'HARD',
+      },
+      {
+        categoryId: catOop.id,
+        question: 'Что такое статический метод?',
+        answer:
+          'Метод класса, вызываемый на самом классе, а не на экземпляре. Не имеет доступа к this экземпляра.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catScope.id,
+        question: 'Что такое замыкание (closure)?',
+        answer:
+          'Функция, которая сохраняет доступ к переменным из внешней области видимости после её завершения.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catScope.id,
+        question: 'Что такое блочная область видимости?',
+        answer:
+          'Переменные let и const видны только внутри блока {} (цикл, if, функция), где объявлены.',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catScope.id,
+        question: 'Чем отличается var от let по области видимости?',
+        answer:
+          'var имеет функциональную область видимости и hoisting; let — блочную, не поднимается как единица.',
+        difficulty: 'MEDIUM',
+      },
+      {
+        categoryId: catGeneral.id,
+        question: 'Что такое алгоритм?',
+        answer: 'Конечная последовательность шагов для решения задачи.',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catGeneral.id,
+        question: 'Что такое Git?',
+        answer:
+          'Распределённая система контроля версий для отслеживания изменений в коде.',
+        difficulty: 'EASY',
+      },
+      {
+        categoryId: catGeneral.id,
+        question: 'Что такое API?',
+        answer:
+          'Application Programming Interface — способ взаимодействия программ через набор правил и контрактов.',
         difficulty: 'MEDIUM',
       },
     ],

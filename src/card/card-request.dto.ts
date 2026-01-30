@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export const CARD_DIFFICULTY_VALUES = ['EASY', 'MEDIUM', 'HARD'] as const;
 export type CardDifficulty = (typeof CARD_DIFFICULTY_VALUES)[number];
@@ -20,3 +20,5 @@ export class CreateCardDto {
   })
   difficulty!: CardDifficulty;
 }
+
+export class UpdateCardDto extends PartialType(CreateCardDto) {}

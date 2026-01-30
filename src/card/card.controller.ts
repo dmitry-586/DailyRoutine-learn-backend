@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -8,7 +16,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateCardDto } from './card-request.dto.js';
+import { CreateCardDto, UpdateCardDto } from './card-request.dto.js';
 import { CardResponseDto } from './card-response.dto.js';
 import { CardService } from './card.service.js';
 
@@ -34,7 +42,7 @@ export class CardController {
   async findAll(
     @Query('categoryId') categoryId?: string,
   ): Promise<CardResponseDto[]> {
-    return this.cardService.findAll(categoryId);
+    return await this.cardService.findAll(categoryId);
   }
 
   @Get(':id')
@@ -46,7 +54,7 @@ export class CardController {
   })
   @ApiNotFoundResponse({ description: 'Карточка не найдена' })
   async findOne(@Param('id') id: string): Promise<CardResponseDto> {
-    return this.cardService.findOne(id);
+    return await this.cardService.findOne(id);
   }
 
   @Post()
@@ -56,6 +64,21 @@ export class CardController {
     type: CardResponseDto,
   })
   async create(@Body() dto: CreateCardDto): Promise<CardResponseDto> {
-    return this.cardService.create(dto);
+    return await this.cardService.create(dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Редактировать карточку' })
+  @ApiParam({ name: 'id', description: 'ID карточки' })
+  @ApiOkResponse({
+    description: 'Карточка обновлена',
+    type: CardResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Карточка не найдена' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCardDto,
+  ): Promise<CardResponseDto> {
+    return await this.cardService.update(id, dto);
   }
 }

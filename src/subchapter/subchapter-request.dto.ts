@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateSubchapterDto {
   @ApiProperty({ description: 'ID главы' })
@@ -13,3 +13,5 @@ export class CreateSubchapterDto {
   @ApiProperty({ description: 'Порядок в главе' })
   order!: number;
 }
+
+export class UpdateSubchapterDto extends PartialType(CreateSubchapterDto) {}
