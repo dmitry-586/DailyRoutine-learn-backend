@@ -1,12 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminGuard } from '../auth/guards/admin.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreatePartDto, UpdatePartDto } from './part-request.dto.js';
 import { PartResponseDto } from './part-response.dto.js';
 import { PartService } from './part.service.js';
@@ -33,17 +44,21 @@ export class PartController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Создать часть' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Создать часть (только админ)' })
   @ApiCreatedResponse({ description: 'Часть создана', type: PartResponseDto })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async create(@Body() dto: CreatePartDto): Promise<PartResponseDto> {
     return await this.partService.create(dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Редактировать часть' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Редактировать часть (только админ)' })
   @ApiParam({ name: 'id', description: 'ID части' })
   @ApiOkResponse({ description: 'Часть обновлена', type: PartResponseDto })
   @ApiNotFoundResponse({ description: 'Часть не найдена' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePartDto,

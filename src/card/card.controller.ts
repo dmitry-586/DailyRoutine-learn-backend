@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -16,6 +18,8 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminGuard } from '../auth/guards/admin.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateCardDto, UpdateCardDto } from './card-request.dto.js';
 import { CardResponseDto } from './card-response.dto.js';
 import { CardService } from './card.service.js';
@@ -58,23 +62,27 @@ export class CardController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Создать карточку' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Создать карточку (только админ)' })
   @ApiCreatedResponse({
     description: 'Карточка создана',
     type: CardResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async create(@Body() dto: CreateCardDto): Promise<CardResponseDto> {
     return await this.cardService.create(dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Редактировать карточку' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Редактировать карточку (только админ)' })
   @ApiParam({ name: 'id', description: 'ID карточки' })
   @ApiOkResponse({
     description: 'Карточка обновлена',
     type: CardResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Карточка не найдена' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateCardDto,

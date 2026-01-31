@@ -8,27 +8,20 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id            String         @id @default(uuid())
   email         String         @unique
   name          String?
   passwordHash  String
-  accessTokens  AccessToken[]
+  role          Role           @default(USER)
   refreshTokens RefreshToken[]
 
   @@map("users")
-}
-
-model AccessToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@map("access_tokens")
 }
 
 model RefreshToken {

@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -16,6 +18,8 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminGuard } from '../auth/guards/admin.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import {
   CreateSubchapterDto,
   UpdateSubchapterDto,
@@ -54,11 +58,13 @@ export class SubchapterController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Создать подраздел' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Создать подраздел (только админ)' })
   @ApiCreatedResponse({
     description: 'Подраздел создан',
     type: SubchapterResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async create(
     @Body() dto: CreateSubchapterDto,
   ): Promise<SubchapterResponseDto> {
@@ -66,13 +72,15 @@ export class SubchapterController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Редактировать подраздел' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Редактировать подраздел (только админ)' })
   @ApiParam({ name: 'id', description: 'ID подраздела' })
   @ApiOkResponse({
     description: 'Подраздел обновлён',
     type: SubchapterResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Подраздел не найден' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateSubchapterDto,

@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -16,6 +18,8 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminGuard } from '../auth/guards/admin.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateChapterDto, UpdateChapterDto } from './chapter-request.dto.js';
 import { ChapterResponseDto } from './chapter-response.dto.js';
 import { ChapterService } from './chapter.service.js';
@@ -48,20 +52,24 @@ export class ChapterController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Создать главу' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Создать главу (только админ)' })
   @ApiCreatedResponse({
     description: 'Глава создана',
     type: ChapterResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async create(@Body() dto: CreateChapterDto): Promise<ChapterResponseDto> {
     return await this.chapterService.create(dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Редактировать главу' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Редактировать главу (только админ)' })
   @ApiParam({ name: 'id', description: 'ID главы' })
   @ApiOkResponse({ description: 'Глава обновлена', type: ChapterResponseDto })
   @ApiNotFoundResponse({ description: 'Глава не найдена' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateChapterDto,

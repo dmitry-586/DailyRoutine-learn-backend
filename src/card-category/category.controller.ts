@@ -1,12 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminGuard } from '../auth/guards/admin.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import {
   CreateCardCategoryDto,
   UpdateCardCategoryDto,
@@ -42,11 +53,13 @@ export class CardCategoryController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Создать категорию карточек' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Создать категорию карточек (только админ)' })
   @ApiCreatedResponse({
     description: 'Категория создана',
     type: CardCategoryResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async create(
     @Body() dto: CreateCardCategoryDto,
   ): Promise<CardCategoryResponseDto> {
@@ -54,13 +67,15 @@ export class CardCategoryController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Редактировать категорию карточек' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Редактировать категорию карточек (только админ)' })
   @ApiParam({ name: 'id', description: 'ID категории' })
   @ApiOkResponse({
     description: 'Категория обновлена',
     type: CardCategoryResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Категория не найдена' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateCardCategoryDto,
