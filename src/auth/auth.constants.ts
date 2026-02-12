@@ -18,7 +18,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 export type CookieOptions = {
   httpOnly: true;
   secure: boolean;
-  sameSite: 'lax';
+  sameSite: 'lax' | 'none';
   path: '/';
   maxAge: number;
 };
@@ -27,7 +27,7 @@ function baseCookieOptions(maxAge: number): CookieOptions {
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'lax' : 'none',
     path: '/',
     maxAge,
   };
