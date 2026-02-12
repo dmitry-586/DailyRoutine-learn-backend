@@ -26,7 +26,7 @@ export type CookieOptions = {
 function baseCookieOptions(maxAge: number): CookieOptions {
   return {
     httpOnly: true,
-    secure: isProduction,
+    secure: true,
     sameSite: isProduction ? 'lax' : 'none',
     path: '/',
     maxAge,
