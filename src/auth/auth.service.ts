@@ -69,84 +69,67 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<AuthTokensResult> {
-    const tokenPrefix = refreshToken.slice(0, 16);
     try {
-      try {
-        // Проверяем подпись и срок жизни refresh token, но не используем его payload напрямую,
-        // чтобы не тащить в новый access уже существующее поле exp.
-        this.jwtService.verify<TokenPayload>(refreshToken);
-      } catch {
-        throw new UnauthorizedException(
-          'Невалидный или истёкший refresh token',
-        );
-      }
-
-      const stored = await prisma.refreshToken.findUnique({
-        where: { token: refreshToken },
-        include: { user: true },
-      });
-
-      if (!stored) {
-        // Это типичный кейс: токен не найден в БД
-        throw new UnauthorizedException('Refresh token не найден');
-      }
-
-      if (!stored.user) {
-        // Защита от потенциально "битых" данных, иначе будет 500 на доступе к user.*
-        throw new UnauthorizedException(
-          'Пользователь, связанный с refresh token, не найден',
-        );
-      }
-
-      const expiresAtTime = stored.expiresAt?.getTime();
-      if (!expiresAtTime || Number.isNaN(expiresAtTime)) {
-        // Если expiresAt в БД в неверном формате — явно сообщаем, а не падаем с 500
-        throw new UnauthorizedException(
-          'Некорректная дата истечения refresh token',
-        );
-      }
-
-      if (stored.revoked || expiresAtTime < Date.now()) {
-        throw new UnauthorizedException(
-          'Refresh token недействителен или отозван',
-        );
-      }
-
-      const timeLeftSec = (expiresAtTime - Date.now()) / 1000;
-      if (timeLeftSec <= REFRESH_ROTATION_THRESHOLD_SEC) {
-        await prisma.refreshToken.update({
-          where: { id: stored.id },
-          data: { revoked: true },
-        });
-        return this.issueTokens(stored.user);
-      }
-
-      const payload: TokenPayload = {
-        sub: stored.user.id,
-        email: stored.user.email,
-        role: stored.user.role,
-      };
-
-      const accessToken = this.jwtService.sign(payload, {
-        expiresIn: ACCESS_EXPIRES_SEC,
-      });
-
-      return {
-        accessToken,
-        refreshToken,
-        user: toUserPayload(stored.user),
-      };
-    } catch (error) {
-      // Логируем причину, чтобы увидеть реальную ошибку на сервере
-      // Не логируем токен целиком — только префикс
-
-      console.error(
-        '[AuthService.refresh] Ошибка при обновлении токена',
-        tokenPrefix,
-        error,
-      );
-      throw error;
+      this.jwtService.verify<TokenPayload>(refreshToken);
+    } catch {
+      throw new UnauthorizedException('Невалидный или истёкший refresh token');
     }
+
+    const stored = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!stored) {
+      // Это типичный кейс: токен не найден в БД
+      throw new UnauthorizedException('Refresh token не найден');
+    }
+
+    if (!stored.user) {
+      // Защита от потенциально "битых" данных, иначе будет 500 на доступе к user.*
+      throw new UnauthorizedException(
+        'Пользователь, связанный с refresh token, не найден',
+      );
+    }
+
+    const expiresAtTime = stored.expiresAt?.getTime();
+    if (!expiresAtTime || Number.isNaN(expiresAtTime)) {
+      // Если expiresAt в БД в неверном формате — явно сообщаем, а не падаем с 500
+      throw new UnauthorizedException(
+        'Некорректная дата истечения refresh token',
+      );
+    }
+
+    if (stored.revoked || expiresAtTime < Date.now()) {
+      throw new UnauthorizedException(
+        'Refresh token недействителен или отозван',
+      );
+    }
+
+    const timeLeftSec = (expiresAtTime - Date.now()) / 1000;
+    if (timeLeftSec <= REFRESH_ROTATION_THRESHOLD_SEC) {
+      await prisma.refreshToken.update({
+        where: { id: stored.id },
+        data: { revoked: true },
+      });
+      return this.issueTokens(stored.user);
+    }
+
+    const payload: TokenPayload = {
+      sub: stored.user.id,
+      email: stored.user.email,
+      role: stored.user.role,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: ACCESS_EXPIRES_SEC,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: toUserPayload(stored.user),
+    };
   }
 
   async findById(id: string): Promise<User | null> {
