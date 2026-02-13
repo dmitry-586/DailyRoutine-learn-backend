@@ -100,6 +100,12 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const refreshToken = getRefreshTokenFromRequest(req);
+
+    console.log(
+      '[AuthController.refresh] refreshToken в cookie найден:',
+      Boolean(refreshToken),
+    );
+
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token отсутствует');
     }
