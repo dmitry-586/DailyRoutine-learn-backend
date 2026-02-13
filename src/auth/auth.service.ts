@@ -71,9 +71,10 @@ export class AuthService {
   async refresh(refreshToken: string): Promise<AuthTokensResult> {
     const tokenPrefix = refreshToken.slice(0, 16);
     try {
-      let payload: TokenPayload;
       try {
-        payload = this.jwtService.verify<TokenPayload>(refreshToken);
+        // Проверяем подпись и срок жизни refresh token, но не используем его payload напрямую,
+        // чтобы не тащить в новый access уже существующее поле exp.
+        this.jwtService.verify<TokenPayload>(refreshToken);
       } catch {
         throw new UnauthorizedException(
           'Невалидный или истёкший refresh token',
@@ -119,6 +120,12 @@ export class AuthService {
         });
         return this.issueTokens(stored.user);
       }
+
+      const payload: TokenPayload = {
+        sub: stored.user.id,
+        email: stored.user.email,
+        role: stored.user.role,
+      };
 
       const accessToken = this.jwtService.sign(payload, {
         expiresIn: ACCESS_EXPIRES_SEC,
