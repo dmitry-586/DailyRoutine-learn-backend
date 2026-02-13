@@ -3,7 +3,7 @@ export const REFRESH_TOKEN_COOKIE = 'refreshToken';
 
 export const JWT_SECRET =
   process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
-export const ACCESS_EXPIRES_SEC = Number(process.env.JWT_ACCESS_EXPIRES) || 900;
+export const ACCESS_EXPIRES_SEC = Number(process.env.JWT_ACCESS_EXPIRES) || 10;
 export const REFRESH_EXPIRES_SEC =
   Number(process.env.JWT_REFRESH_EXPIRES) || 604800;
 
