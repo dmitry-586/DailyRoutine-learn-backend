@@ -42,6 +42,30 @@ function toChapterResponseDto(
 
 @Injectable()
 export class ChapterService {
+  async recalculateGlobalChapterOrder(): Promise<void> {
+    const parts = await prisma.part.findMany({
+      orderBy: { order: 'asc' },
+      include: { chapters: { orderBy: { order: 'asc' } } },
+    });
+
+    let globalOrder = 1;
+    const updates = parts.flatMap((part) =>
+      part.chapters.map((ch) => ({
+        id: ch.id,
+        order: globalOrder++,
+      })),
+    );
+
+    await Promise.all(
+      updates.map((u) =>
+        prisma.chapter.update({
+          where: { id: u.id },
+          data: { order: u.order },
+        }),
+      ),
+    );
+  }
+
   async findAll(partId?: string): Promise<ChapterResponseDto[]> {
     const chapters = await prisma.chapter.findMany({
       where: partId ? { partId } : undefined,
@@ -63,57 +87,48 @@ export class ChapterService {
   }
 
   async create(dto: CreateChapterDto): Promise<ChapterResponseDto> {
-    const part = await prisma.part.findUnique({
-      where: { id: dto.partId },
-    });
+    const part = await prisma.part.findUnique({ where: { id: dto.partId } });
     if (!part) {
       throw new NotFoundException(`Часть с id ${dto.partId} не найдена`);
     }
+
     const chapter = await prisma.chapter.create({
-      data: {
-        partId: dto.partId,
-        title: dto.title,
-        order: dto.order,
-      },
+      data: { partId: dto.partId, title: dto.title, order: dto.order },
     });
 
-    return {
-      id: chapter.id,
-      partId: chapter.partId,
-      title: chapter.title,
-      order: chapter.order,
-      subchapters: [],
-    };
+    await this.recalculateGlobalChapterOrder();
+
+    return this.findOne(chapter.id);
   }
 
   async update(id: string, dto: UpdateChapterDto): Promise<ChapterResponseDto> {
-    const existing = await prisma.chapter.findUnique({
-      where: { id },
-      ...includeSubchapters,
-    });
+    const existing = await prisma.chapter.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException(`Глава с id ${id} не найдена`);
     }
+
     if (dto.partId !== undefined) {
-      const part = await prisma.part.findUnique({
-        where: { id: dto.partId },
-      });
+      const part = await prisma.part.findUnique({ where: { id: dto.partId } });
       if (!part) {
         throw new NotFoundException(`Часть с id ${dto.partId} не найдена`);
       }
     }
+
     const data: { partId?: string; title?: string; order?: number } = {};
     if (dto.partId !== undefined) data.partId = dto.partId;
     if (dto.title !== undefined) data.title = dto.title;
     if (dto.order !== undefined) data.order = dto.order;
+
     if (Object.keys(data).length === 0) {
-      return toChapterResponseDto(existing);
+      return this.findOne(id);
     }
-    const chapter = await prisma.chapter.update({
-      where: { id },
-      data,
-      ...includeSubchapters,
-    });
-    return toChapterResponseDto(chapter);
+
+    await prisma.chapter.update({ where: { id }, data });
+
+    if (dto.order !== undefined || dto.partId !== undefined) {
+      await this.recalculateGlobalChapterOrder();
+    }
+
+    return this.findOne(id);
   }
 }

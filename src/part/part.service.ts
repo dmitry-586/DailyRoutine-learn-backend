@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PartGetPayload } from '../../generated/prisma/models/Part.js';
+import { ChapterService } from '../chapter/chapter.service.js';
 import { prisma } from '../lib/prisma.js';
 import type { CreatePartDto, UpdatePartDto } from './part-request.dto.js';
 import type {
@@ -39,6 +40,8 @@ function toPartResponseDto(part: PartWithChapterHeaders): PartResponseDto {
 
 @Injectable()
 export class PartService {
+  constructor(private readonly chapterService: ChapterService) {}
+
   async findAll(): Promise<PartResponseDto[]> {
     const parts = await prisma.part.findMany({
       orderBy: { order: 'asc' },
@@ -88,6 +91,11 @@ export class PartService {
       data,
       ...includeChaptersHeaders,
     });
+
+    if (dto.order !== undefined) {
+      await this.chapterService.recalculateGlobalChapterOrder();
+    }
+
     return toPartResponseDto(part);
   }
 }

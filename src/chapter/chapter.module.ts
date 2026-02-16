@@ -7,5 +7,6 @@ import { ChapterService } from './chapter.service.js';
   imports: [AuthModule],
   controllers: [ChapterController],
   providers: [ChapterService],
+  exports: [ChapterService],
 })
 export class ChapterModule {}

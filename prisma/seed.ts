@@ -105,7 +105,7 @@ Java — строгая типизация, объектно-ориентиро�
         create: [
           {
             title: 'Переменные и типы данных',
-            order: 1,
+            order: 4,
             subchapters: {
               create: [
                 {
@@ -135,7 +135,7 @@ var city = "Москва";
           },
           {
             title: 'Функции и их использование',
-            order: 2,
+            order: 5,
             subchapters: {
               create: [
                 {
@@ -169,7 +169,7 @@ console.log(add(5, 3)); // 8
           },
           {
             title: 'Массивы и методы работы с ними',
-            order: 3,
+            order: 6,
             subchapters: {
               create: [
                 {
@@ -200,7 +200,7 @@ const numbers = [1, 2, 3, 4, 5];
           },
           {
             title: 'Объекты и работа с ними',
-            order: 4,
+            order: 7,
             subchapters: {
               create: [
                 {
@@ -250,7 +250,7 @@ console.log(name, age); // "Иван" 30`,
         create: [
           {
             title: 'Асинхронное программирование',
-            order: 1,
+            order: 8,
             subchapters: {
               create: [
                 {
@@ -289,7 +289,7 @@ async function fetchUser() {
           },
           {
             title: 'Замыкания и область видимости',
-            order: 2,
+            order: 9,
             subchapters: {
               create: [
                 {
@@ -325,7 +325,7 @@ console.log(counter()); // 2
           },
           {
             title: 'Классы и ООП',
-            order: 3,
+            order: 10,
             subchapters: {
               create: [
                 {
