@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -10,6 +11,7 @@ import {
 import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -64,5 +66,20 @@ export class PartController {
     @Body() dto: UpdatePartDto,
   ): Promise<PartResponseDto> {
     return await this.partService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({
+    summary: 'Удалить часть (только админ)',
+    description:
+      'Удаляет часть и все связанные главы и подглавы (каскадное удаление)',
+  })
+  @ApiParam({ name: 'id', description: 'ID части' })
+  @ApiNoContentResponse({ description: 'Часть успешно удалена' })
+  @ApiNotFoundResponse({ description: 'Часть не найдена' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
+  async delete(@Param('id') id: string): Promise<void> {
+    return await this.partService.delete(id);
   }
 }

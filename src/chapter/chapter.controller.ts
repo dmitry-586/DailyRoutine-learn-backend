@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -11,6 +12,7 @@ import {
 import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -75,5 +77,19 @@ export class ChapterController {
     @Body() dto: UpdateChapterDto,
   ): Promise<ChapterResponseDto> {
     return await this.chapterService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({
+    summary: 'Удалить главу (только админ)',
+    description: 'Удаляет главу и все связанные подглавы (каскадное удаление)',
+  })
+  @ApiParam({ name: 'id', description: 'ID главы' })
+  @ApiNoContentResponse({ description: 'Глава успешно удалена' })
+  @ApiNotFoundResponse({ description: 'Глава не найдена' })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
+  async delete(@Param('id') id: string): Promise<void> {
+    return await this.chapterService.delete(id);
   }
 }

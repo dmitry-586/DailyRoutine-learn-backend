@@ -92,13 +92,33 @@ export class ChapterService {
       throw new NotFoundException(`Часть с id ${dto.partId} не найдена`);
     }
 
-    const chapter = await prisma.chapter.create({
-      data: { partId: dto.partId, title: dto.title, order: dto.order },
+    const chapter = await prisma.$transaction(async (tx) => {
+      const chaptersToShift = await tx.chapter.findMany({
+        where: {
+          order: {
+            gte: dto.order,
+          },
+        },
+        select: { id: true, order: true },
+        orderBy: { order: 'desc' },
+      });
+
+      for (const chapterToShift of chaptersToShift) {
+        await tx.chapter.update({
+          where: { id: chapterToShift.id },
+          data: { order: chapterToShift.order + 1 },
+        });
+      }
+
+      return await tx.chapter.create({
+        data: { partId: dto.partId, title: dto.title, order: dto.order },
+        ...includeSubchapters,
+      });
     });
 
     await this.recalculateGlobalChapterOrder();
 
-    return this.findOne(chapter.id);
+    return toChapterResponseDto(chapter);
   }
 
   async update(id: string, dto: UpdateChapterDto): Promise<ChapterResponseDto> {
@@ -123,12 +143,107 @@ export class ChapterService {
       return this.findOne(id);
     }
 
-    await prisma.chapter.update({ where: { id }, data });
+    if (dto.order !== undefined && dto.order !== existing.order) {
+      const chapter = await prisma.$transaction(async (tx) => {
+        const oldOrder = existing.order;
+        const newOrder = dto.order!;
 
-    if (dto.order !== undefined || dto.partId !== undefined) {
+        if (newOrder > oldOrder) {
+          const chaptersToShift = await tx.chapter.findMany({
+            where: {
+              id: { not: id },
+              order: {
+                gt: oldOrder,
+                lte: newOrder,
+              },
+            },
+            select: { id: true, order: true },
+            orderBy: { order: 'asc' },
+          });
+
+          for (const chapterToShift of chaptersToShift) {
+            await tx.chapter.update({
+              where: { id: chapterToShift.id },
+              data: { order: chapterToShift.order - 1 },
+            });
+          }
+        } else {
+          const chaptersToShift = await tx.chapter.findMany({
+            where: {
+              id: { not: id },
+              order: {
+                gte: newOrder,
+                lt: oldOrder,
+              },
+            },
+            select: { id: true, order: true },
+            orderBy: { order: 'desc' },
+          });
+
+          for (const chapterToShift of chaptersToShift) {
+            await tx.chapter.update({
+              where: { id: chapterToShift.id },
+              data: { order: chapterToShift.order + 1 },
+            });
+          }
+        }
+
+        return await tx.chapter.update({
+          where: { id },
+          data,
+          ...includeSubchapters,
+        });
+      });
+
       await this.recalculateGlobalChapterOrder();
+
+      return toChapterResponseDto(chapter);
     }
 
-    return this.findOne(id);
+    if (dto.partId !== undefined && dto.partId !== existing.partId) {
+      const chapter = await prisma.chapter.update({
+        where: { id },
+        data,
+        ...includeSubchapters,
+      });
+      return toChapterResponseDto(chapter);
+    }
+
+    const chapter = await prisma.chapter.update({
+      where: { id },
+      data,
+      ...includeSubchapters,
+    });
+    return toChapterResponseDto(chapter);
+  }
+
+  async delete(id: string): Promise<void> {
+    const chapter = await prisma.chapter.findUnique({ where: { id } });
+    if (!chapter) {
+      throw new NotFoundException(`Глава с id ${id} не найдена`);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const chaptersToShift = await tx.chapter.findMany({
+        where: {
+          order: {
+            gt: chapter.order,
+          },
+        },
+        select: { id: true, order: true },
+        orderBy: { order: 'asc' },
+      });
+
+      for (const chapterToShift of chaptersToShift) {
+        await tx.chapter.update({
+          where: { id: chapterToShift.id },
+          data: { order: chapterToShift.order - 1 },
+        });
+      }
+
+      await tx.chapter.delete({ where: { id } });
+    });
+
+    await this.recalculateGlobalChapterOrder();
   }
 }
