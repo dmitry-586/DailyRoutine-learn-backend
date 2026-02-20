@@ -5,7 +5,6 @@ import {
   Param,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -46,18 +45,10 @@ export class PartController {
 
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
-  async create(
-    @Body() dto: CreatePartDto,
-    @Req() req,
-  ): Promise<PartResponseDto> {
-    console.log('=== RAW REQUEST BODY ===');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    console.log(req.body); // сырые данные
-    console.log('=== DTO ===');
-    console.log(dto);
-    console.log('title:', dto.title);
-    console.log('order:', dto.order);
-
+  @ApiOperation({ summary: 'Создать часть (только админ)' })
+  @ApiCreatedResponse({ description: 'Часть создана', type: PartResponseDto })
+  @ApiForbiddenResponse({ description: 'Доступ только для администратора' })
+  async create(@Body() dto: CreatePartDto): Promise<PartResponseDto> {
     return await this.partService.create(dto);
   }
 
