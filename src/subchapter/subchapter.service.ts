@@ -90,4 +90,31 @@ export class SubchapterService {
     });
     return toSubchapterResponseDto(subchapter);
   }
+
+  async delete(id: string): Promise<void> {
+    const subchapter = await prisma.subchapter.findUnique({ where: { id } });
+    if (!subchapter) {
+      throw new NotFoundException(`Подраздел с id ${id} не найден`);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const toShift = await tx.subchapter.findMany({
+        where: {
+          chapterId: subchapter.chapterId,
+          order: { gt: subchapter.order },
+        },
+        select: { id: true, order: true },
+        orderBy: { order: 'asc' },
+      });
+
+      for (const item of toShift) {
+        await tx.subchapter.update({
+          where: { id: item.id },
+          data: { order: item.order - 1 },
+        });
+      }
+
+      await tx.subchapter.delete({ where: { id } });
+    });
+  }
 }
