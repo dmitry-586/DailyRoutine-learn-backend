@@ -9,8 +9,6 @@ export class CreateSubchapterDto {
 
   @ApiProperty({ description: 'Заголовок подраздела' })
   @IsString({ message: 'Заголовок должен быть строкой' })
-  @MinLength(1, { message: 'Заголовок не может быть пустым' })
-  @Trim()
   title!: string;
 
   @ApiProperty({ description: 'Текст материала' })
