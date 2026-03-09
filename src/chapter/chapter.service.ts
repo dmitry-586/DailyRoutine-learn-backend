@@ -206,6 +206,7 @@ export class ChapterService {
         data,
         ...includeSubchapters,
       });
+      await this.recalculateGlobalChapterOrder();
       return toChapterResponseDto(chapter);
     }
 

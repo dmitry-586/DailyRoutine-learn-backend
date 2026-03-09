@@ -7,5 +7,6 @@ import { SubchapterService } from './subchapter.service.js';
   imports: [AuthModule],
   controllers: [SubchapterController],
   providers: [SubchapterService],
+  exports: [SubchapterService],
 })
 export class SubchapterModule {}
