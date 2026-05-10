@@ -3,6 +3,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { CardCategoryModule } from './card-category/category.module.js';
 import { CardModule } from './card/card.module.js';
 import { ChapterModule } from './chapter/chapter.module.js';
+import { FigmaModule } from './figma/figma.module.js';
 import { PartModule } from './part/part.module.js';
 import { SubchapterModule } from './subchapter/subchapter.module.js';
 
@@ -14,6 +15,7 @@ import { SubchapterModule } from './subchapter/subchapter.module.js';
     SubchapterModule,
     CardCategoryModule,
     CardModule,
+    FigmaModule,
   ],
   controllers: [],
   providers: [],

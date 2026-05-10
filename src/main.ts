@@ -1,12 +1,19 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import 'dotenv/config';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const uploadsRoot = join(process.cwd(), 'uploads');
+  mkdirSync(uploadsRoot, { recursive: true });
+
+  app.useStaticAssets(uploadsRoot, { prefix: '/uploads/' });
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
@@ -38,6 +45,7 @@ async function bootstrap() {
     .addTag('part', 'Части курса')
     .addTag('chapter', 'Главы')
     .addTag('subchapter', 'Подразделы глав')
+    .addTag('figma', 'Методичка Figma')
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);

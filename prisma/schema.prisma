@@ -70,6 +70,27 @@ model Subchapter {
   @@map("subchapters")
 }
 
+model FigmaChapter {
+  id       String         @id @default(uuid())
+  title    String
+  order    Int
+  sections FigmaSection[]
+
+  @@map("figma_chapters")
+}
+
+model FigmaSection {
+  id        String       @id @default(uuid())
+  chapterId String
+  title     String       @default("")
+  content   String
+  order     Int
+  chapter   FigmaChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+  @@map("figma_sections")
+}
+
 enum CardDifficulty {
   EASY
   MEDIUM
