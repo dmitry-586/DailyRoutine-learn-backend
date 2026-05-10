@@ -5,7 +5,16 @@ import {
 } from '@nestjs/common';
 import type { FigmaChapterGetPayload } from '../../generated/prisma/models/FigmaChapter.js';
 import type { FigmaSection } from '../../generated/prisma/client.js';
+import { existsSync, mkdirSync, renameSync } from 'node:fs';
+import { extname, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { prisma } from '../lib/prisma.js';
+import {
+  FIGMA_ALLOWED_MEDIA_TYPES,
+  FIGMA_PUBLIC_MEDIA_PATH,
+  FIGMA_UPLOAD_DIR,
+  type UploadedFigmaFile,
+} from './figma-media.js';
 import type {
   CreateFigmaChapterDto,
   CreateFigmaSectionDto,
@@ -14,6 +23,7 @@ import type {
 } from './figma-request.dto.js';
 import type {
   FigmaChapterResponseDto,
+  FigmaMediaResponseDto,
   FigmaSectionResponseDto,
 } from './figma-response.dto.js';
 
@@ -21,25 +31,11 @@ type FigmaChapterWithSections = FigmaChapterGetPayload<{
   include: { sections: true };
 }>;
 
-export interface UploadedFigmaFile {
-  originalname: string;
-  mimetype: string;
-  path: string;
-  size: number;
-}
-
 const includeSections = {
   include: {
     sections: { orderBy: { order: 'asc' as const } },
   },
 } as const;
-
-const ALLOWED_MEDIA_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-]);
 
 function toFigmaSectionResponseDto(
   section: FigmaSection,
@@ -62,6 +58,30 @@ function toFigmaChapterResponseDto(
     order: chapter.order,
     sections: chapter.sections.map(toFigmaSectionResponseDto),
   };
+}
+
+function ensureUploadDir() {
+  if (!existsSync(FIGMA_UPLOAD_DIR)) {
+    mkdirSync(FIGMA_UPLOAD_DIR, { recursive: true });
+  }
+}
+
+function extensionFor(file: UploadedFigmaFile) {
+  const originalExtension = extname(file.originalname).toLowerCase();
+  if (originalExtension) return originalExtension;
+
+  switch (file.mimetype) {
+    case 'image/jpeg':
+      return '.jpg';
+    case 'image/png':
+      return '.png';
+    case 'image/webp':
+      return '.webp';
+    case 'image/gif':
+      return '.gif';
+    default:
+      return '';
+  }
 }
 
 @Injectable()
@@ -465,15 +485,25 @@ export class FigmaService {
     await this.recalculateSectionOrder(section.chapterId);
   }
 
-  validateMediaFile(file?: UploadedFigmaFile): UploadedFigmaFile {
+  uploadMedia(
+    file: UploadedFigmaFile | undefined,
+    origin: string,
+  ): FigmaMediaResponseDto {
     if (!file) {
       throw new BadRequestException('Файл не загружен');
     }
 
-    if (!ALLOWED_MEDIA_TYPES.has(file.mimetype)) {
+    if (!FIGMA_ALLOWED_MEDIA_TYPES.has(file.mimetype)) {
       throw new BadRequestException('Можно загрузить только фото или GIF');
     }
 
-    return file;
+    ensureUploadDir();
+
+    const filename = `${randomUUID()}${extensionFor(file)}`;
+    const finalPath = join(FIGMA_UPLOAD_DIR, filename);
+
+    renameSync(file.path, finalPath);
+
+    return { url: `${origin}${FIGMA_PUBLIC_MEDIA_PATH}/${filename}` };
   }
 }

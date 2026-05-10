@@ -13,7 +13,7 @@ async function bootstrap() {
   const uploadsRoot = join(process.cwd(), 'uploads');
   mkdirSync(uploadsRoot, { recursive: true });
 
-  app.useStaticAssets(uploadsRoot, { prefix: '/uploads/' });
+  app.useStaticAssets(uploadsRoot, { prefix: '/api/uploads/' });
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({

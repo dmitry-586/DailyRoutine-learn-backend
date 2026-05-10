@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -26,11 +25,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { existsSync, mkdirSync, renameSync } from 'node:fs';
-import { extname, join } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import { AdminGuard } from '../auth/guards/admin.guard.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { getRequestOrigin } from '../lib/request-origin.js';
+import {
+  figmaMediaUploadOptions,
+  type UploadedFigmaFile,
+} from './figma-media.js';
 import {
   CreateFigmaChapterDto,
   CreateFigmaSectionDto,
@@ -42,39 +43,7 @@ import {
   FigmaMediaResponseDto,
   FigmaSectionResponseDto,
 } from './figma-response.dto.js';
-import { FigmaService, type UploadedFigmaFile } from './figma.service.js';
-
-const FIGMA_UPLOAD_DIR = join(process.cwd(), 'uploads', 'figma');
-const ALLOWED_MEDIA_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-]);
-
-function ensureUploadDir() {
-  if (!existsSync(FIGMA_UPLOAD_DIR)) {
-    mkdirSync(FIGMA_UPLOAD_DIR, { recursive: true });
-  }
-}
-
-function extensionFor(file: UploadedFigmaFile) {
-  const originalExtension = extname(file.originalname).toLowerCase();
-  if (originalExtension) return originalExtension;
-
-  switch (file.mimetype) {
-    case 'image/jpeg':
-      return '.jpg';
-    case 'image/png':
-      return '.png';
-    case 'image/webp':
-      return '.webp';
-    case 'image/gif':
-      return '.gif';
-    default:
-      return '';
-  }
-}
+import { FigmaService } from './figma.service.js';
 
 @ApiTags('figma')
 @Controller('figma')
@@ -189,22 +158,7 @@ export class FigmaController {
 
   @Post('media')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      dest: FIGMA_UPLOAD_DIR,
-      limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-      fileFilter: (_req, file, callback) => {
-        if (!ALLOWED_MEDIA_TYPES.has(file.mimetype)) {
-          callback(
-            new BadRequestException('Можно загрузить только фото или GIF'),
-            false,
-          );
-          return;
-        }
-        callback(null, true);
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', figmaMediaUploadOptions))
   @ApiOperation({ summary: 'Загрузить фото или GIF для Figma (только админ)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -227,14 +181,9 @@ export class FigmaController {
     @UploadedFile() rawFile: UploadedFigmaFile | undefined,
     @Req() request: Request,
   ): Promise<FigmaMediaResponseDto> {
-    ensureUploadDir();
-    const file = this.figmaService.validateMediaFile(rawFile);
-    const filename = `${randomUUID()}${extensionFor(file)}`;
-    const finalPath = join(FIGMA_UPLOAD_DIR, filename);
-
-    renameSync(file.path, finalPath);
-
-    const origin = `${request.protocol}://${request.get('host')}`;
-    return { url: `${origin}/uploads/figma/${filename}` };
+    return await this.figmaService.uploadMedia(
+      rawFile,
+      getRequestOrigin(request),
+    );
   }
 }
