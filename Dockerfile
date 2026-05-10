@@ -36,6 +36,8 @@ COPY --from=builder --chown=nestjs:nodejs /app/generated ./generated
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
 
+RUN mkdir -p /app/uploads/figma && chown -R nestjs:nodejs /app/uploads
+
 USER nestjs
 
 EXPOSE 4000
